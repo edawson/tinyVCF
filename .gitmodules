@@ -1,3 +1,6 @@
 [submodule "digestpp"]
 	path = digestpp
 	url = https://github.com/kerukuro/digestpp.git
+[submodule "Hash"]
+	path = Hash
+	url = https://github.com/Chocobo1/Hash.git

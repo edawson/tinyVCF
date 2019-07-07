@@ -1,7 +1,7 @@
 #ifndef TINY_VCF_HPP
 #define TINY_VCF_HPP
 #include "pliib.hpp"
-#include "hasher.hpp"
+#include "sha1.h"
 #include <sstream>
 #include <vector>
 #include <string>
@@ -10,7 +10,6 @@
 
 
 namespace TVCF{
-
 
     // TODO: break into multi-allelic and mono-allelic Variant types,
     // where multiallelic just wraps the mono-allelic case.
@@ -28,6 +27,16 @@ namespace TVCF{
         variant(){
 
         };
+
+	~variant(){
+	  //delete [] chrom;
+	  //delete [] id;
+	  //delete [] ref;
+	  //for (auto& i : alt){
+	  //  delete [] i;
+	  //}
+
+	}
 
         variant(const variant& h){
             pliib::strcopy(h.chrom, this->chrom);
@@ -60,48 +69,25 @@ namespace TVCF{
             for (size_t i = 0; i < alt.size(); ++i){
                  
             }
+            return st.str();
         };
 
         inline std::string make_id(){
-            // sha1::SHA1 s;
-            // s.processBytes(this->chrom, std::strlen(this->chrom));
-            // s.processBytes(this->pos, sizeof(this->pos));
-            // char* ref_copy;
-            // pliib::strcopy(this->ref, ref_copy);
-            // pliib::to_upper(ref_copy, strlen(ref_copy));
-            // s.processBytes(ref_copy, std::strlen(ref_copy));
-            // delete ref_copy;
-            // for (auto& a : this->alt){
-            //     char* x;
-            //     pliib::strcopy(a, x);
-            //     pliib::to_upper(x, std::strlen(x));
-            //     s.processBytes(x, std::strlen(x));
-            // }
-            // std::uint32_t digest;
-            // s.getDigest(digest);
-            // std::stringstream st;
-            // for (int i = 0; i < 5; ++i){
-            //     st << digest[i];
-            // }
-            // return st.str();
-            return "";
-
-        };
-
-        inline std::uint64_t get_sv_end(){
-            // NB: "END" tag is one-based
-            // This is amusingly confusing....
-            if (infos.find("END") != infos.end()){
-                return std::stoull(infos.at("END")); 
+            Chocobo1::SHA1 s;
+            std::stringstream st;
+            st << this->chrom << '\n';
+            st << this->pos << '\n';
+            std::string refcop(this->ref);
+            st << pliib::to_upper(refcop) << '\n';
+            for (auto& a : this->alt){
+                std::string altcop(a);
+                st << pliib::to_upper(altcop) << '\n';
             }
-            return 0;
-        };
-        
-        inline std::string get_sv_type(){
-            if (infos.find("SVTYPE") != infos.end()){
-                return infos.at("SVTYPE");
-            }
-            return "";
+            string fin = st.str();
+            s.addData(fin.c_str(), fin.length());
+
+            return s.finalize().toString();
+
         };
 
         inline std::string get_info(std::string infotag){
@@ -111,13 +97,42 @@ namespace TVCF{
             cerr << "INFO TAG NOT FOUND: " << infotag << "." << endl;
             return "";
         };
+
+        inline std::uint64_t get_sv_end(){
+            // NB: "END" tag is one-based
+            // This is amusingly confusing....
+            string s = get_info("END");
+            if (s != ""){
+                return std::stoull(s); 
+            }
+            return 0;
+        };
+        
+        inline std::string get_sv_type(){
+            string s = get_info("SVTYPE");
+            if (s != ""){
+                return s;
+            }
+            return "";
+        };
+
+        inline std::uint64_t get_sv_span(int altnum){
+            string s = get_info("SPAN");
+            if (s != ""){
+                return std::stoull(s);
+            }
+            return 0;
+        };
+
     
         // wraps substitutions, indels, and SVS
         // returns the 1-based end position of a variant regardless of type.
         inline std::uint64_t get_reference_end(int altnum){
             std::uint64_t val = this->get_sv_end();
-            if (val != 0){
-                return val;
+            string svtype = get_sv_type();
+            // Enforce zero-length SV types for INS variants
+            if (val != 0 && svtype == "INS"){
+                return 0;
             }
             // IF we don't have an SV end, take the diff between ref and alt.
             // TODO: implement that logic....
@@ -129,8 +144,9 @@ namespace TVCF{
             }
             return 0;
         }
-
     };
+
+
     
 
     inline void parse_line(char* line){
