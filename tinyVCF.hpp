@@ -61,10 +61,10 @@ namespace TVCF{
         };
 
         inline std::string to_vcf(){
-            stringstream st;
+            std::stringstream st;
             st << chrom << '\t' << pos << '\t' <<
                 id << '\t' << ref << '\t';
-            vector<string> altstrs;
+            std::vector<std::string> altstrs;
             altstrs.resize(alt.size());
             for (size_t i = 0; i < alt.size(); ++i){
                  
@@ -83,7 +83,7 @@ namespace TVCF{
                 std::string altcop(a);
                 st << pliib::to_upper(altcop) << '\n';
             }
-            string fin = st.str();
+            std::string fin = st.str();
             s.addData(fin.c_str(), fin.length());
 
             return s.finalize().toString();
@@ -94,14 +94,14 @@ namespace TVCF{
             if (infos.find(infotag) != infos.end()){
                 return infos.at(infotag);
             }
-            cerr << "INFO TAG NOT FOUND: " << infotag << "." << endl;
+            std::cerr << "INFO TAG NOT FOUND: " << infotag << "." << std::endl;
             return "";
         };
 
         inline std::uint64_t get_sv_end(){
             // NB: "END" tag is one-based
             // This is amusingly confusing....
-            string s = get_info("END");
+            std::string s = get_info("END");
             if (s != ""){
                 return std::stoull(s); 
             }
@@ -109,7 +109,7 @@ namespace TVCF{
         };
         
         inline std::string get_sv_type(){
-            string s = get_info("SVTYPE");
+            std::string s = get_info("SVTYPE");
             if (s != ""){
                 return s;
             }
@@ -117,7 +117,7 @@ namespace TVCF{
         };
 
         inline std::uint64_t get_sv_span(int altnum){
-            string s = get_info("SPAN");
+            std::string s = get_info("SPAN");
             if (s != ""){
                 return std::stoull(s);
             }
@@ -129,7 +129,7 @@ namespace TVCF{
         // returns the 1-based end position of a variant regardless of type.
         inline std::uint64_t get_reference_end(int altnum){
             std::uint64_t val = this->get_sv_end();
-            string svtype = get_sv_type();
+            std::string svtype = get_sv_type();
             // Enforce zero-length SV types for INS variants
             if (val != 0 && svtype == "INS"){
                 return 0;
@@ -168,7 +168,7 @@ namespace TVCF{
         assert(num_splits >= 7);
         
         pliib::strcopy(splits[0], var->chrom);
-        var->pos = stoull(string(splits[1]));
+        var->pos = std::stoull(std::string(splits[1]));
         pliib::strcopy(splits[2], var->id);
         pliib::strcopy(splits[3], var->ref);
         
@@ -207,13 +207,13 @@ namespace TVCF{
             int* i_split_sizes;
             pliib::split(info_splits[i], '=', i_splits, i_split_num, i_split_sizes);
             if (i_split_num == 1){
-                var->infos[string(i_splits[0])] = string(i_splits[0]);
+                var->infos[std::string(i_splits[0])] = std::string(i_splits[0]);
             }
             else if (i_split_num == 2){
-                var->infos[string(i_splits[0])] = string(i_splits[1]);
+                var->infos[std::string(i_splits[0])] = std::string(i_splits[1]);
             }
             else{
-                cerr << "WARNING: INVALID INFO FIELD LENGTH FOR VARIANT AT " << var->chrom << " " << var->pos << ". IGNORING FIELD." << endl;
+                std::cerr << "WARNING: INVALID INFO FIELD LENGTH FOR VARIANT AT " << var->chrom << " " << var->pos << ". IGNORING FIELD." << std::endl;
             }
             pliib::destroy_splits(i_splits, i_split_num, i_split_sizes);
         }
