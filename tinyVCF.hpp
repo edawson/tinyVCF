@@ -11,6 +11,7 @@
 
 namespace TVCF{
 
+
     // TODO: break into multi-allelic and mono-allelic Variant types,
     // where multiallelic just wraps the mono-allelic case.
     struct variant{
@@ -28,15 +29,15 @@ namespace TVCF{
 
         };
 
-	~variant(){
-	  //delete [] chrom;
-	  //delete [] id;
-	  //delete [] ref;
-	  //for (auto& i : alt){
-	  //  delete [] i;
-	  //}
+        ~variant(){
+            //delete [] chrom;
+            //delete [] id;
+            //delete [] ref;
+            //for (auto& i : alt){
+            //  delete [] i;
+            //}
 
-	}
+        }
 
         variant(const variant& h){
             pliib::strcopy(h.chrom, this->chrom);
@@ -61,13 +62,13 @@ namespace TVCF{
         };
 
         inline std::string to_vcf(){
-            stringstream st;
+            std::stringstream st;
             st << chrom << '\t' << pos << '\t' <<
                 id << '\t' << ref << '\t';
-            vector<string> altstrs;
+            std::vector<std::string> altstrs;
             altstrs.resize(alt.size());
             for (size_t i = 0; i < alt.size(); ++i){
-                 
+
             }
             return st.str();
         };
@@ -83,7 +84,7 @@ namespace TVCF{
                 std::string altcop(a);
                 st << pliib::to_upper(altcop) << '\n';
             }
-            string fin = st.str();
+            std::string fin = st.str();
             s.addData(fin.c_str(), fin.length());
 
             return s.finalize().toString();
@@ -94,22 +95,22 @@ namespace TVCF{
             if (infos.find(infotag) != infos.end()){
                 return infos.at(infotag);
             }
-            cerr << "INFO TAG NOT FOUND: " << infotag << "." << endl;
+            std::cerr << "INFO TAG NOT FOUND: " << infotag << "." << std::endl;
             return "";
         };
 
         inline std::uint64_t get_sv_end(){
             // NB: "END" tag is one-based
             // This is amusingly confusing....
-            string s = get_info("END");
+            std::string s = get_info("END");
             if (s != ""){
                 return std::stoull(s); 
             }
             return 0;
         };
-        
+
         inline std::string get_sv_type(){
-            string s = get_info("SVTYPE");
+            std::string s = get_info("SVTYPE");
             if (s != ""){
                 return s;
             }
@@ -117,19 +118,19 @@ namespace TVCF{
         };
 
         inline std::uint64_t get_sv_span(int altnum){
-            string s = get_info("SPAN");
+            std::string s = get_info("SPAN");
             if (s != ""){
                 return std::stoull(s);
             }
             return 0;
         };
 
-    
+
         // wraps substitutions, indels, and SVS
         // returns the 1-based end position of a variant regardless of type.
         inline std::uint64_t get_reference_end(int altnum){
             std::uint64_t val = this->get_sv_end();
-            string svtype = get_sv_type();
+            std::string svtype = get_sv_type();
             // Enforce zero-length SV types for INS variants
             if (val != 0 && svtype == "INS"){
                 return 0;
@@ -139,7 +140,7 @@ namespace TVCF{
             else{
                 if (pliib::canonical(this->ref, std::strlen(this->ref)) && 
                         pliib::canonical(this->alt[altnum], std::strlen(this->alt[altnum]))){
-                    
+
                 }
             }
             return 0;
@@ -147,7 +148,13 @@ namespace TVCF{
     };
 
 
-    
+    struct minimal_sv_allele{
+        char* chrom;
+        std::uint64_t pos;
+        std::uint64_t end;
+        std::string svtype;
+    };
+
 
     inline void parse_line(char* line){
 
@@ -158,20 +165,20 @@ namespace TVCF{
     };
 
     inline void parse_variant_line(char* line, variant*& var){
-        
-        
+
+
         char** splits;
         int num_splits;
         int* split_sizes;
 
         pliib::split(line, '\t', splits, num_splits, split_sizes);
         assert(num_splits >= 7);
-        
+
         pliib::strcopy(splits[0], var->chrom);
-        var->pos = stoull(string(splits[1]));
+        var->pos = std::stoull(std::string(splits[1]));
         pliib::strcopy(splits[2], var->id);
         pliib::strcopy(splits[3], var->ref);
-        
+
         char** alt_splits;
         int alt_split_num;
         int* alt_split_sizes;
@@ -188,14 +195,14 @@ namespace TVCF{
         char** filter_splits;
         int filter_split_num;
         int* filter_split_sizes;
-        
+
         pliib::split(splits[6], ';', filter_splits, filter_split_num, filter_split_sizes);
         var->filters.resize(filter_split_num);
         for (size_t i = 0; i < filter_split_num; ++i){
             var->filters[i].assign(filter_splits[i]);
         }
         pliib::destroy_splits(filter_splits, filter_split_num, filter_split_sizes);
-        
+
         char** info_splits;
         int info_split_num;
         int* info_split_sizes;
@@ -207,13 +214,13 @@ namespace TVCF{
             int* i_split_sizes;
             pliib::split(info_splits[i], '=', i_splits, i_split_num, i_split_sizes);
             if (i_split_num == 1){
-                var->infos[string(i_splits[0])] = string(i_splits[0]);
+                var->infos[std::string(i_splits[0])] = std::string(i_splits[0]);
             }
             else if (i_split_num == 2){
-                var->infos[string(i_splits[0])] = string(i_splits[1]);
+                var->infos[std::string(i_splits[0])] = std::string(i_splits[1]);
             }
             else{
-                cerr << "WARNING: INVALID INFO FIELD LENGTH FOR VARIANT AT " << var->chrom << " " << var->pos << ". IGNORING FIELD." << endl;
+                std::cerr << "WARNING: INVALID INFO FIELD LENGTH FOR VARIANT AT " << var->chrom << " " << var->pos << ". IGNORING FIELD." << std::endl;
             }
             pliib::destroy_splits(i_splits, i_split_num, i_split_sizes);
         }
