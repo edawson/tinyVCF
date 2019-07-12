@@ -11,6 +11,63 @@
 
 namespace TVCF{
 
+    struct minimal_allele_t{
+        char* chrom = nullptr;
+        char* chrom_2 = nullptr;
+        char* allele_string = nullptr;
+        std::uint32_t pos = 0;
+        std::uint32_t end = 0;
+        char* type = nullptr;
+
+        minimal_allele_t(){
+            char* chrom = nullptr;
+            char* chrom_2 = nullptr;
+            char* allele_string = nullptr;
+            std::uint32_t pos = 0;
+            std::uint32_t end = 0;
+            char* type = nullptr;
+        };
+
+        ~minimal_allele_t(){
+            pliib::strdelete(chrom);
+            pliib::strdelete(chrom_2);
+            pliib::strdelete(allele_string);
+            pliib::strdelete(type);
+        }
+    };
+
+    struct minimal_variant_t{
+        std::uint8_t num_alleles;
+        std::uint32_t pos;
+        minimal_variant_t* alleles;
+        minimal_variant_t(){
+
+        };
+        minimal_variant_t(std::uint32_t position, std::uint8_t capacity = 2){
+
+        };
+        ~minimal_variant_t(){
+
+        };
+        void resize(std::uint8_t new_size){
+
+        };
+        void trim(){
+
+        };
+        void add(minimal_allele_t*& a){
+
+        };
+        std::uint32_t position(){
+            return 0;
+        };
+        std::uint32_t zero_based_position(){
+            return 0;
+        };
+        std::string to_string(){
+            return "";
+        };
+    };
 
     // TODO: break into multi-allelic and mono-allelic Variant types,
     // where multiallelic just wraps the mono-allelic case.
@@ -30,12 +87,12 @@ namespace TVCF{
         };
 
         ~variant(){
-            //delete [] chrom;
-            //delete [] id;
-            //delete [] ref;
-            //for (auto& i : alt){
-            //  delete [] i;
-            //}
+            pliib::strdelete(chrom);
+            pliib::strdelete(id);
+            pliib::strdelete(ref);
+            for (auto& i : alt){
+                pliib::strdelete(i);
+            }
 
         }
 
@@ -145,14 +202,6 @@ namespace TVCF{
             }
             return 0;
         }
-    };
-
-
-    struct minimal_sv_allele{
-        char* chrom;
-        std::uint64_t pos;
-        std::uint64_t end;
-        std::string svtype;
     };
 
 
