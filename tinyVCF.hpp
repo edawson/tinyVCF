@@ -33,15 +33,54 @@ namespace TVCF{
             pliib::strdelete(chrom_2);
             pliib::strdelete(allele_string);
             pliib::strdelete(type);
-        }
+        };
+
+        inline std::string make_id(){
+            Chocobo1::SHA1 s;
+            std::stringstream st;
+            st << this->chrom << '\n';
+            st << this->pos << '\n';
+            if (this->chrom_2 != nullptr){
+                st << this->chrom_2 << '\n';
+            }
+            st << this->end << '\n';
+            if (this->type != nullptr){
+                st << this->type << '\n';
+            }
+            
+            
+            std::string fin = st.str();
+            s.addData(fin.c_str(), fin.length());
+
+            return s.finalize().toString();
+        };
+
+        inline std::string to_string(){
+            std::stringstream st;
+            st << this->chrom <<
+            " " << this->pos <<
+            " " << this->chrom_2 <<
+            " " << this->end;
+            if (this->type != nullptr){
+                st << " " << this->type;
+            }
+            
+            return st.str();
+        };
+
+        
     };
 
     struct minimal_variant_t{
-        std::uint8_t num_alleles;
-        std::uint32_t pos;
-        minimal_variant_t* alleles;
+        std::uint8_t num_alleles = 0;
+        std::uint8_t allele_cap = 0;
+        std::uint32_t pos = 0;
+        minimal_variant_t* alleles = nullptr;
         minimal_variant_t(){
-
+            this->num_alleles = 0;
+            this->pos = 0;
+            this->allele_cap = 2;
+            this->alleles = new minimal_variant_t[allele_cap];
         };
         minimal_variant_t(std::uint32_t position, std::uint8_t capacity = 2){
 
@@ -152,7 +191,9 @@ namespace TVCF{
             if (infos.find(infotag) != infos.end()){
                 return infos.at(infotag);
             }
-            std::cerr << "INFO TAG NOT FOUND: " << infotag << "." << std::endl;
+            #ifdef DEBUG
+                std::cerr << "INFO TAG NOT FOUND: " << infotag << "." << std::endl;
+            #endif
             return "";
         };
 
